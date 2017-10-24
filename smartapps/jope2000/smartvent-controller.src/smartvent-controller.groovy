@@ -25,23 +25,105 @@ definition(
 
 def getNumberOfRooms()
 {
-	return 3
+	return settings.numberOfRooms
 }
 
-preferences {
-	section("Thermostat") {
-		input (name:"thermostat", type: "capability.thermostat", title: "Main thermostat?",required:true)
-	}
-    
-    for (int roomNumber = 1; roomNumber <= getNumberOfRooms(); roomNumber++)
+preferences 
+{
+    page(name: "generalSetupPage")
+    page(name: "roomSetup")
+}
+
+def generalSetupPage()
+{
+	dynamicPage(name: "generalSetupPage", title: "General Setup", uninstall: true, nextPage: roomSetup )
     {
-        section("Rooom ${roomNumber}") {
-            input (name:"room${roomNumber}_tempSensor", type: "capability.temperatureMeasurement", title: "Temperature Sensor?",required:true)
-            input (name:"room${roomNumber}_desiredTemp", type:"decimal", title: "Temp Threshold [${getTemperatureScale()}]", required: true)	
-            input (name:"room${roomNumber}_vents", type: "capability.switchLevel", title: "Vents?",required:true, multiple:true)
-            input (name:"room${roomNumber}_minVentLevel", type: "decimal", title: "Minimum Vent Level", required:true)
-            input (name:"room${roomNumber}_maxVentLevel", type: "decimal", title: "Maximum Vent Level", required:true)
+    	section("ABOUT") 
+        {
+            paragraph "Version 0.9999" 
         }
+        
+     	section("Thermostat") 
+        {
+            input (name:"thermostat", type: "capability.thermostat", title: "Main thermostat?",required:true)
+        }   
+        
+        section("Rooms")
+        {
+        	input (name:"numberOfRooms", type:"decimal", title: "Number of rooms?", required: true)
+            href(name: "href",
+                 title: "Room Setup",
+                 required: false,
+                 page: "roomSetup")
+        }
+    }
+}
+
+def roomSetup()
+{
+	dynamicPage(name: "roomSetup", title: "Room Setup", install: true)
+    {
+    	if(getNumberOfRooms() >= 1)
+        {
+        	section("Rooom 1") 
+            {
+                input (name:"room1_tempSensor", type: "capability.temperatureMeasurement", title: "Temperature Sensor?",required:true)
+                input (name:"room1_desiredTemp", type:"decimal", title: "Temp Threshold [${getTemperatureScale()}]", required: true)	
+                input (name:"room1_vents", type: "capability.switchLevel", title: "Vents?",required:true, multiple:true)
+                input (name:"room1_minVentLevel", type: "decimal", title: "Minimum Vent Level", required:true)
+                input (name:"room1_maxVentLevel", type: "decimal", title: "Maximum Vent Level", required:true)
+            }
+        }
+    
+    	if(getNumberOfRooms() >= 2)
+        {
+        	section("Rooom 2") 
+            {
+                input (name:"room2_tempSensor", type: "capability.temperatureMeasurement", title: "Temperature Sensor?",required:true)
+                input (name:"room2_desiredTemp", type:"decimal", title: "Temp Threshold [${getTemperatureScale()}]", required: true)	
+                input (name:"room2_vents", type: "capability.switchLevel", title: "Vents?",required:true, multiple:true)
+                input (name:"room2_minVentLevel", type: "decimal", title: "Minimum Vent Level", required:true)
+                input (name:"room2_maxVentLevel", type: "decimal", title: "Maximum Vent Level", required:true)
+            }
+        }
+        
+        if(getNumberOfRooms() >= 3)
+        {
+        	section("Rooom 3") 
+            {
+                input (name:"room3_tempSensor", type: "capability.temperatureMeasurement", title: "Temperature Sensor?",required:true)
+                input (name:"room3_desiredTemp", type:"decimal", title: "Temp Threshold [${getTemperatureScale()}]", required: true)	
+                input (name:"room3_vents", type: "capability.switchLevel", title: "Vents?",required:true, multiple:true)
+                input (name:"room3_minVentLevel", type: "decimal", title: "Minimum Vent Level", required:true)
+                input (name:"room3_maxVentLevel", type: "decimal", title: "Maximum Vent Level", required:true)
+            }
+        }
+        
+        if(getNumberOfRooms() >= 4)
+        {
+        	section("Rooom 4") 
+            {
+                input (name:"room4_tempSensor", type: "capability.temperatureMeasurement", title: "Temperature Sensor?",required:true)
+                input (name:"room4_desiredTemp", type:"decimal", title: "Temp Threshold [${getTemperatureScale()}]", required: true)	
+                input (name:"room4_vents", type: "capability.switchLevel", title: "Vents?",required:true, multiple:true)
+                input (name:"room4_minVentLevel", type: "decimal", title: "Minimum Vent Level", required:true)
+                input (name:"room4_maxVentLevel", type: "decimal", title: "Maximum Vent Level", required:true)
+            }
+        }
+    
+    	/*
+        for (int roomNumber = 1; roomNumber <= getNumberOfRooms(); roomNumber++)
+        {
+           section("Rooom ${roomNumber}") {
+                input (name:"room${roomNumber}_tempSensor", type: "capability.temperatureMeasurement", title: "Temperature Sensor?",required:true)
+                input (name:"room${roomNumber}_desiredTemp", type:"decimal", title: "Temp Threshold [${getTemperatureScale()}]", required: true)	
+                input (name:"room1_vents", type: "capability.switchLevel", title: "Vents?",required:true, multiple:true)
+                //input (name:"room${roomNumber}_vents", type: "capability.switchLevel", title: "Vents?",required:true, multiple:true)
+                input (name:"room${roomNumber}_minVentLevel", type: "decimal", title: "Minimum Vent Level", required:true)
+                input (name:"room${roomNumber}_maxVentLevel", type: "decimal", title: "Maximum Vent Level", required:true)
+            }
+        }
+        */
     }
 }
 
@@ -180,11 +262,15 @@ def adjustVentSettingsInRoom(roomNumber)
         	log.debug "Room ${roomNumber} is too cool and heating is active. Opening vents"
             vents.setLevel(settings["room${roomNumber}_maxVentLevel"])
         }
-        
-        if(isFanCirculationModeEnabled() && thermostat.currentTemperature > temperatureSensorTemperature)
+        else if(isIdleMode() && isFanCirculationModeEnabled() && thermostat.currentTemperature > temperatureSensorTemperature)
         {
         	log.debug "Room ${roomNumber} is too cool. Use fan circulation to heat room"
             vents.setLevel(settings["room${roomNumber}_maxVentLevel"])
+        }
+        else
+        {
+        	log.debug "Room ${roomNumber} is too cool. No heating available, close vent."
+        	vents.setLevel(settings["room${roomNumber}_minVentLevel"])
         }
     }
     else if(temperatureSensorTemperature > desiredRoomTemperature)
@@ -195,11 +281,15 @@ def adjustVentSettingsInRoom(roomNumber)
         	log.debug "Room ${roomNumber} is too hot and cooling is active. Opening vents"
             vents.setLevel(settings["room${roomNumber}_maxVentLevel"])
         }
-        
-        if(isFanCirculationModeEnabled() && thermostat.currentTemperature < temperatureSensorTemperature)
+        else if(isIdleMode() && isFanCirculationModeEnabled() && thermostat.currentTemperature < temperatureSensorTemperature)
         {
         	log.debug "Room ${roomNumber} is too hot. Use fan circulation to cool room"
             vents.setLevel(settings["room${roomNumber}_maxVentLevel"])
+        }
+        else
+        {
+        	log.debug "Room ${roomNumber} is too hot. No cooling available, close vent."
+        	vents.setLevel(settings["room${roomNumber}_minVentLevel"])
         }
     }
     
@@ -258,6 +348,12 @@ def isCoolingMode()
     }
     
 	return false
+}
+
+def isIdleMode()
+{
+	def operationState = thermostat.currentThermostatOperatingState
+    return operatingState == "idle"
 }
 
 def isFanCirculationModeEnabled()
